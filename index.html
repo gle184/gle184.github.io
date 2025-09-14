@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReadHub - 读书笔记分享平台</title>
+    <style>
+        :root {
+            --primary-color: #4e89e8;
+            --secondary-color: #f8f9fa;
+            --text-color: #333;
+            --bg-color: #fff;
+            --card-bg: #f8f9fa;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        .dark-mode {
+            --primary-color: #6ba4ff;
+            --secondary-color: #2c2c2c;
+            --text-color: #f1f1f1;
+            --bg-color: #1e1e1e;
+            --card-bg: #2c2c2c;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: var(--transition);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        /* 导航栏样式 */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin-left: 1.5rem;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        /* 英雄区域样式 */
+        .hero {
+            padding: 4rem 0;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-color), #6ba4ff);
+            color: white;
+            border-radius: 0 0 20px 20px;
+            margin-bottom: 2rem;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto 1.5rem;
+        }
+
+        .btn {
+            display: inline-block;
+            background: white;
+            color: var(--primary-color);
+            padding: 0.7rem 1.5rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: var(--transition);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 书籍展示区域 */
+        .section-title {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .book-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .book-cover {
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .book-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .book-card:hover .book-cover img {
+            transform: scale(1.05);
+        }
+
+        .book-info {
+            padding: 1.5rem;
+        }
+
+        .book-title {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .book-author {
+            color: #777;
+            margin-bottom: 1rem;
+        }
+
+        .book-desc {
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .read-more {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* 更换封面按钮 */
+        .change-cover-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .book-cover:hover .change-cover-btn {
+            opacity: 1;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--bg-color);
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #777;
+        }
+
+        .cover-preview {
+            width: 100%;
+            height: 200px;
+            border: 2px dashed #ddd;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .cover-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .modal-btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .btn-cancel {
+            background: #f1f1f1;
+            color: #333;
+        }
+
+        .btn-confirm {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* 笔记区域 */
+        .notes-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .note-form {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        textarea.form-control {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .submit-btn:hover {
+            background: #3a75d3;
+        }
+
+        .recent-notes {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .note-item {
+            padding: 1rem 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .note-item:last-child {
+            border-bottom: none;
+        }
+
+        .note-title {
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+        }
+
+        .note-date {
+            font-size: 0.8rem;
+            color: #777;
+        }
+
+        /* 页脚样式 */
+        footer {
+            background: var(--secondary-color);
+            padding: 2rem 0;
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            margin: 1rem 0;
+        }
+
+        .footer-links li {
+            margin: 0 1rem;
+        }
+
+        .footer-links a {
+            color: var(--text-color);
+            text-decoration: none;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .notes-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">ReadHub</div>
+                <ul class="nav-links">
+                    <li><a href="#">首页</a></li>
+                    <li><a href="#">书籍</a></li>
+                    <li><a href="#">笔记</a></li>
+                    <li><a href="#">关于</a></li>
+                </ul>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>发现好书，分享思考</h1>
+            <p>ReadHub是一个读书笔记分享平台，帮助爱书之人记录阅读心得，发现更多值得一读的好书。</p>
+            <a href="#" class="btn">开始探索</a>
+        </div>
+    </section>
+
+    <main class="container">
+        <section class="books-section">
+            <h2 class="section-title">热门书籍</h2>
+            <div class="books-grid" id="booksGrid">
+                <!-- 书籍将通过JavaScript动态加载 -->
+            </div>
+        </section>
+
+        <section class="notes-section">
+            <h2 class="section-title">分享读书笔记</h2>
+            <div class="notes-container">
+                <div class="note-form">
+                    <h3>添加新笔记</h3>
+                    <form id="noteForm">
+                        <div class="form-group">
+                            <label for="bookSelect">选择书籍</label>
+                            <select class="form-control" id="bookSelect">
+                                <option value="">-- 请选择书籍 --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="noteTitle">笔记标题</label>
+                            <input type="text" class="form-control" id="noteTitle" placeholder="输入笔记标题">
+                        </div>
+                        <div class="form-group">
+                            <label for="noteContent">笔记内容</label>
+                            <textarea class="form-control" id="noteContent" placeholder="分享你的阅读心得..."></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn">发布笔记</button>
+                    </form>
+                </div>
+                <div class="recent-notes">
+                    <h3>最近笔记</h3>
+                    <div id="recentNotesList">
+                        <!-- 最近笔记将通过JavaScript动态加载 -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 更换封面模态框 -->
+    <div class="modal" id="coverModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>更换书籍封面</h3>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <div class="cover-preview" id="coverPreview">
+                <p>预览将在这里显示</p>
+            </div>
+            <input type="file" id="coverUpload" accept="image/*" style="display: none;">
+            <button class="submit-btn" id="triggerUpload">选择图片</button>
+            <div class="modal-actions">
+                <button class="modal-btn btn-cancel" id="cancelChange">取消</button>
+                <button class="modal-btn btn-confirm" id="confirmChange">确认更换</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 ReadHub 读书笔记分享平台</p>
+            <ul class="footer-links">
+                <li><a href="#">关于我们</a></li>
+                <li><a href="#">隐私政策</a></li>
+                <li><a href="#">联系我们</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <script>
+        // 示例书籍数据
+        const books = [
+            {
+                id: 1,
+                title: "活着",
+                author: "余华",
+                cover: "https://via.placeholder.com/300x400.png?text=活着",
+                description: "讲述了在大时代背景下，随着内战、三反五反、大跃进、文化大革命等社会变革，徐福贵的人生和家庭不断经受着苦难，到了最后所有亲人都先后离他而去，仅剩下年老的他和一头老牛相依为命。"
+            },
+            {
+                id: 2,
+                title: "百年孤独",
+                author: "加西亚·马尔克斯",
+                cover: "https://via.placeholder.com/300x400.png?text=百年孤独",
+                description: "作品描写了布恩迪亚家族七代人的传奇故事，以及加勒比海沿岸小镇马孔多的百年兴衰，反映了拉丁美洲一个世纪以来风云变幻的历史。"
+            },
+            {
+                id: 3,
+                title: "三体",
+                author: "刘慈欣",
+                cover: "https://via.placeholder.com/300x400.png?text=三体",
+                description: "作品讲述了地球人类文明和三体文明的信息交流、生死搏杀及两个文明在宇宙中的兴衰历程。其第一部经过刘宇昆翻译后获得了第73届雨果奖最佳长篇小说奖。"
+            },
+            {
+                id: 4,
+                title: "人类简史",
+                author: "尤瓦尔·赫拉利",
+                cover: "https://via.placeholder.com/300x400.png?text=人类简史",
+                description: "该书从演化生物学的角度介绍了人类的历史，理清影响人类发展的重大脉络，挖掘人类文化、宗教、法律、国家、信贷等产生的根源。"
+            }
+        ];
+
+        // 示例笔记数据
+        let notes = [
+            {
+                id: 1,
+                bookId: 1,
+                title: "《活着》读后感：生命的意义",
+                content: "这本书让我深刻体会到，活着本身就是一种勇气和力量。无论生活多么艰难，只要有生命在，就有希望存在。",
+                date: "2025-9-14"
+            },
+            {
+                id: 2,
+                bookId: 3,
+                title: "《三体》中的宇宙社会学思考",
+                content: "黑暗森林法则令人不寒而栗，但也确实提供了一种解释费米悖论的可能性。宇宙可能真的是一个黑暗的森林，每个文明都是带枪的猎人。",
+                date: "2025-9-14"
+            }
+        ];
+
+        // 当前选中的书籍ID
+        let currentBookId = null;
+
+        // DOM加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 渲染书籍列表
+            renderBooks();
+            
+            // 填充书籍选择下拉框
+            populateBookSelect();
+            
+            // 渲染最近笔记
+            renderRecentNotes();
+            
+            // 主题切换功能
+            const themeToggle = document.getElementById('themeToggle');
+            themeToggle.addEventListener('click', toggleTheme);
+            
+            // 笔记表单提交处理
+            const noteForm = document.getElementById('noteForm');
+            noteForm.addEventListener('submit', handleNoteSubmit);
+            
+            // 封面更换功能初始化
+            initCoverChange();
+        });
+
+        // 渲染书籍列表
+        function renderBooks() {
+            const booksGrid = document.getElementById('booksGrid');
+            booksGrid.innerHTML = '';
+            
+            books.forEach(book => {
+                // 检查本地存储中是否有自定义封面
+                const customCover = localStorage.getItem(`bookCover_${book.id}`);
+                const coverUrl = customCover || book.cover;
+                
+                const bookCard = document.createElement('div');
+                bookCard.className = 'book-card';
+                bookCard.innerHTML = `
+                    <div class="book-cover">
+                        <img src="${coverUrl}" alt="${book.title}">
+                        <button class="change-cover-btn" data-book-id="${book.id}">更换封面</button>
+                    </div>
+                    <div class="book-info">
+                        <h3 class="book-title">${book.title}</h3>
+                        <p class="book-author">作者: ${book.author}</p>
+                        <p class="book-desc">${book.description.substring(0, 80)}...</p>
+                        <a href="#" class="read-more">阅读更多</a>
+                    </div>
+                `;
+                booksGrid.appendChild(bookCard);
+            });
+            
+            // 为所有更换封面按钮添加事件监听
+            document.querySelectorAll('.change-cover-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    currentBookId = this.getAttribute('data-book-id');
+                    openCoverModal();
+                });
+            });
+        }
+
+        // 初始化封面更换功能
+        function initCoverChange() {
+            const modal = document.getElementById('coverModal');
+            const closeModal = document.getElementById('closeModal');
+            const cancelChange = document.getElementById('cancelChange');
+            const triggerUpload = document.getElementById('triggerUpload');
+            const coverUpload = document.getElementById('coverUpload');
+            const confirmChange = document.getElementById('confirmChange');
+            const coverPreview = document.getElementById('coverPreview');
+            
+            // 打开模态框
+            function openModal() {
+                modal.style.display = 'flex';
+                coverPreview.innerHTML = '<p>预览将在这里显示</p>';
+            }
+            
+            // 关闭模态框
+            function closeModalFunc() {
+                modal.style.display = 'none';
+                coverUpload.value = '';
+            }
+            
+            // 打开封面更换模态框
+            window.openCoverModal = function() {
+                openModal();
+            }
+            
+            // 关闭模态框事件
+            closeModal.addEventListener('click', closeModalFunc);
+            cancelChange.addEventListener('click', closeModalFunc);
+            
+            // 触发文件选择
+            triggerUpload.addEventListener('click', function() {
+                coverUpload.click();
+            });
+            
+            // 文件选择变化
+            coverUpload.addEventListener('change', function(e) {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        coverPreview.innerHTML = `<img src="${e.target.result}" alt="封面预览">`;
+                    }
+                    
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            });
+            
+            // 确认更换封面
+            confirmChange.addEventListener('click', function() {
+                if (coverUpload.files && coverUpload.files[0]) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        // 保存到本地存储
+                        localStorage.setItem(`bookCover_${currentBookId}`, e.target.result);
+                        
+                        // 重新渲染书籍列表以显示新封面
+                        renderBooks();
+                        
+                        // 关闭模态框
+                        closeModalFunc();
+                        
+                        alert('封面更换成功！');
+                    }
+                    
+                    reader.readAsDataURL(coverUpload.files[0]);
+                } else {
+                    alert('请先选择一张图片');
+                }
+            });
+        }
+
+        // 填充书籍选择下拉框
+        function populateBookSelect() {
+            const bookSelect = document.getElementById('bookSelect');
+            books.forEach(book => {
+                const option = document.createElement('option');
+                option.value = book.id;
+                option.textContent = `${book.title} - ${book.author}`;
+                bookSelect.appendChild(option);
+            });
+        }
+
+        // 渲染最近笔记
+        function renderRecentNotes() {
+            const recentNotesList = document.getElementById('recentNotesList');
+            recentNotesList.innerHTML = '';
+            
+            // 按日期降序排列笔记
+            const sortedNotes = [...notes].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedNotes.forEach(note => {
+                const book = books.find(b => b.id === note.bookId);
+                const noteItem = document.createElement('div');
+                noteItem.className = 'note-item';
+                noteItem.innerHTML = `
+                    <h4 class="note-title">${note.title}</h4>
+                    <p>书籍: ${book ? book.title : '未知'}</p>
+                    <p class="note-date">日期: ${note.date}</p>
+                `;
+                recentNotesList.appendChild(noteItem);
+            });
+        }
+
+        // 切换主题
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const themeToggle = document.getElementById('themeToggle');
+            if (document.body.classList.contains('dark-mode')) {
+                themeToggle.textContent = '☀️';
+            } else {
+                themeToggle.textContent = '🌙';
+            }
+        }
+
+        // 处理笔记表单提交
+        function handleNoteSubmit(e) {
+            e.preventDefault();
+            
+            const bookId = parseInt(document.getElementById('bookSelect').value);
+            const title = document.getElementById('noteTitle').value;
+            const content = document.getElementById('noteContent').value;
+            
+            if (!bookId || !title || !content) {
+                alert('请填写所有字段');
+                return;
+            }
+            
+            // 创建新笔记
+            const newNote = {
+                id: notes.length + 1,
+                bookId,
+                title,
+                content,
+                date: new Date().toISOString().split('T')[0] // YYYY-MM-DD格式
+            };
+            
+            // 添加到笔记列表
+            notes.push(newNote);
+            
+            // 重新渲染最近笔记
+            renderRecentNotes();
+            
+            // 重置表单
+            document.getElementById('noteForm').reset();
+            
+            alert('笔记发布成功！');
+        }
+    </script>
+</body>
+</html>
