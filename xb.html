@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>异步寻宝探险</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-top: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(to right, #ffd700, #ffa500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: #ddd;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .map-container {
+            position: relative;
+            height: 300px;
+            background: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80') center/cover;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 3px solid #8B4513;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .character {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: url('https://cdn-icons-png.flaticon.com/512/2922/2922510.png') center/contain no-repeat;
+            transition: all 2s ease-in-out;
+            z-index: 10;
+        }
+        
+        .location {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            opacity: 0.8;
+            transition: all 0.5s;
+            cursor: pointer;
+        }
+        
+        .location:hover {
+            transform: scale(1.1);
+            opacity: 1;
+        }
+        
+        .library {
+            top: 50px;
+            left: 100px;
+            background: rgba(139, 69, 19, 0.8);
+        }
+        
+        .temple {
+            top: 150px;
+            right: 150px;
+            background: rgba(205, 133, 63, 0.8);
+        }
+        
+        .treasure {
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 215, 0, 0.8);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        button {
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            background: linear-gradient(to right, #FF8C00, #FFA500);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .log-container {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #444;
+        }
+        
+        .log-entry {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            animation: fadeIn 0.5s;
+        }
+        
+        .success {
+            background: rgba(0, 128, 0, 0.3);
+            border-left: 4px solid #0f0;
+        }
+        
+        .error {
+            background: rgba(255, 0, 0, 0.3);
+            border-left: 4px solid #f00;
+        }
+        
+        .info {
+            background: rgba(30, 144, 255, 0.3);
+            border-left: 4px solid #1e90ff;
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, #FF8C00, #FFD700);
+            width: 0%;
+            transition: width 0.5s;
+            border-radius: 10px;
+        }
+        
+        .treasure-found {
+            text-align: center;
+            font-size: 2rem;
+            color: #FFD700;
+            margin: 20px 0;
+            animation: pulse 2s infinite;
+            display: none;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .map-container {
+                height: 200px;
+            }
+            
+            .location {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            .library {
+                top: 30px;
+                left: 50px;
+            }
+            
+            .temple {
+                top: 100px;
+                right: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>异步寻宝探险</h1>
+    <p class="subtitle">使用async/await探索神秘宝藏</p>
+    
+    <div class="container">
+        <div class="game-area">
+            <div class="map-container">
+                <div class="character" id="character"></div>
+                <div class="location library" title="古老图书馆">📚</div>
+                <div class="location temple" title="神秘神庙">🏛️</div>
+                <div class="location treasure" title="宝藏位置">💎</div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            
+            <div class="controls">
+                <button id="start-btn">开始寻宝</button>
+                <button id="reset-btn">重置游戏</button>
+            </div>
+            
+            <div class="treasure-found" id="treasure-found">
+                🎉 恭喜你找到了宝藏！ 🎉
+            </div>
+            
+            <div class="log-container" id="log-container">
+                <!-- 日志将在这里显示 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟宝藏地图API（与原代码相同）
+        class TreasureMap {
+            static getInitialClue() {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve("在古老的图书馆里找到了第一个线索...");
+                    }, 1000);
+                });
+            }
+
+            static decodeAncientScript(clue) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        if (!clue) {
+                            reject("没有线索可以解码!");
+                        }
+                        resolve("解码成功!宝藏在一座古老的神庙中...");
+                    }, 1500);
+                });
+            }
+
+            static searchTemple(location) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        const random = Math.random();
+                        if (random < 0.5) {
+                            reject("糟糕!遇到了神庙守卫!");
+                        }
+                        resolve("找到了一个神秘的箱子...");
+                    }, 2000);
+                });
+            }
+
+            static openTreasureBox() {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve("恭喜!你找到了传说中的宝藏!");
+                    }, 1000);
+                });
+            }
+        }
+
+        // 获取DOM元素
+        const startBtn = document.getElementById('start-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const logContainer = document.getElementById('log-container');
+        const character = document.getElementById('character');
+        const progressBar = document.getElementById('progress-bar');
+        const treasureFound = document.getElementById('treasure-found');
+
+        // 添加日志函数
+        function addLog(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = message;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // 移动角色函数
+        function moveCharacter(toLocation) {
+            const locations = {
+                'start': { left: '10px', top: '130px' },
+                'library': { left: '80px', top: '30px' },
+                'temple': { left: 'calc(100% - 100px)', top: '120px' },
+                'treasure': { left: 'calc(50% - 20px)', top: 'calc(100% - 60px)' }
+            };
+            
+            character.style.left = locations[toLocation].left;
+            character.style.top = locations[toLocation].top;
+        }
+
+        // 更新进度条
+        function updateProgress(step) {
+            const steps = 4; // 总步骤数
+            const progress = (step / steps) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        // 使用async/await重写的寻宝函数
+        async function findTreasureWithAsyncAwait() {
+            try {
+                // 重置状态
+                moveCharacter('start');
+                updateProgress(0);
+                logContainer.innerHTML = '';
+                treasureFound.style.display = 'none';
+                startBtn.disabled = true;
+                
+                addLog('寻宝开始！前往古老图书馆...', 'info');
+                
+                // 第一步：获取初始线索
+                moveCharacter('library');
+                updateProgress(1);
+                const clue = await TreasureMap.getInitialClue();
+                addLog(clue, 'success');
+                
+                // 第二步：解码古老文字
+                addLog('正在解码古老文字...', 'info');
+                updateProgress(2);
+                const location = await TreasureMap.decodeAncientScript(clue);
+                addLog(location, 'success');
+                
+                // 第三步：搜索神庙
+                moveCharacter('temple');
+                addLog('前往神秘神庙...', 'info');
+                updateProgress(3);
+                const box = await TreasureMap.searchTemple(location);
+                addLog(box, 'success');
+                
+                // 第四步：打开宝箱
+                moveCharacter('treasure');
+                addLog('尝试打开宝箱...', 'info');
+                updateProgress(4);
+                const treasure = await TreasureMap.openTreasureBox();
+                addLog(treasure, 'success');
+                
+                // 寻宝成功
+                treasureFound.style.display = 'block';
+                addLog('寻宝任务完成！', 'success');
+                
+            } catch (error) {
+                addLog(`任务失败: ${error}`, 'error');
+                addLog('尝试重新开始寻宝...', 'info');
+            } finally {
+                startBtn.disabled = false;
+            }
+        }
+
+        // 重置游戏
+        function resetGame() {
+            moveCharacter('start');
+            updateProgress(0);
+            logContainer.innerHTML = '';
+            treasureFound.style.display = 'none';
+            startBtn.disabled = false;
+            addLog('游戏已重置，准备开始新的寻宝之旅！', 'info');
+        }
+
+        // 添加事件监听器
+        startBtn.addEventListener('click', findTreasureWithAsyncAwait);
+        resetBtn.addEventListener('click', resetGame);
+
+        // 初始化
+        resetGame();
+    </script>
+</body>
+</html>
